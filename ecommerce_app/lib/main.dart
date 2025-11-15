@@ -9,7 +9,6 @@ import 'package:ecommerce_app/providers/cart_provider.dart';
 import 'package:ecommerce_app/providers/theme_provider.dart';
 import 'package:ecommerce_app/screens/product_search.dart';
 import 'package:ecommerce_app/screens/product_detail_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 const Color kRichBlack = Color(0xFF1D1F24);
 const Color kBrown = Color(0xFF8B5E3C);
@@ -20,28 +19,28 @@ Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
-
+  // Create providers AFTER Firebase init
   final cartProvider = CartProvider();
-  cartProvider.initializeAuthListener();
+  cartProvider.initializeAuthListener(); // IMPORTANT
 
-  FlutterNativeSplash.remove();
-
+  // Run the app first before removing splash
   runApp(
-    ChangeNotifierProvider.value(
-      value: cartProvider,
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ],
-        child: const MyApp(),
-      ),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => cartProvider),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: const MyApp(),
     ),
   );
+
+  // Remove splash AFTER widget tree is ready
+  FlutterNativeSplash.remove();
 }
 
 class MyApp extends StatelessWidget {
